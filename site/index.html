@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hill Climb - CI for Agent Prompt Changes</title>
+    <meta name="description" content="Mock 10 enterprise connectors. Eval your agent. Know your prompt change didn't break something. Open source.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --border: #262626;
+            --text: #fafafa;
+            --muted: #a1a1aa;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --blue: #3b82f6;
+            --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+        }
+        .hero h1 span { color: var(--green); }
+        .hero .subtitle {
+            font-size: 1.25rem;
+            color: var(--muted);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        .hero .cta {
+            display: inline-flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .btn-primary {
+            background: var(--green);
+            color: #000;
+        }
+        .btn-primary:hover { background: #16a34a; }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { border-color: var(--muted); }
+
+        /* Install */
+        .install {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            margin: 40px auto;
+            max-width: 640px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .install code { color: var(--green); }
+        .install .copy-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .install .copy-btn:hover { color: var(--text); border-color: var(--muted); }
+
+        /* Problem */
+        .problem {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+        }
+        .problem h2 {
+            font-size: 1.75rem;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .problem-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 32px;
+        }
+        @media (max-width: 640px) { .problem-grid { grid-template-columns: 1fr; } }
+        .problem-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .problem-card .label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+        .problem-card .label.before { color: var(--red); }
+        .problem-card .label.after { color: var(--green); }
+        .problem-card p { color: var(--muted); font-size: 0.95rem; }
+
+        /* Numbers */
+        .numbers {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .numbers h2 { font-size: 1.75rem; margin-bottom: 32px; }
+        .num-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        @media (max-width: 640px) { .num-grid { grid-template-columns: 1fr; } }
+        .num-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px 24px;
+        }
+        .num-card .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--green);
+        }
+        .num-card .desc {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        /* Demo */
+        .demo {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+        }
+        .demo h2 { font-size: 1.75rem; margin-bottom: 16px; text-align: center; }
+        .demo .subtitle { color: var(--muted); text-align: center; margin-bottom: 32px; }
+        .terminal {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .terminal-header {
+            background: #161b22;
+            padding: 12px 16px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .terminal-dot.red { background: #ff5f57; }
+        .terminal-dot.yellow { background: #febc2e; }
+        .terminal-dot.green { background: #28c840; }
+        .terminal-body {
+            padding: 20px;
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+        .terminal-body .prompt { color: var(--green); }
+        .terminal-body .comment { color: #6e7681; }
+        .terminal-body .output { color: var(--muted); }
+        .terminal-body .pass { color: var(--green); }
+        .terminal-body .fail { color: var(--red); }
+        .terminal-body .verdict { color: var(--green); font-weight: 700; }
+
+        /* Connectors */
+        .connectors {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+        }
+        .connectors h2 { font-size: 1.75rem; margin-bottom: 32px; text-align: center; }
+        .connector-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 640px) { .connector-grid { grid-template-columns: repeat(2, 1fr); } }
+        .connector-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px 16px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        .connector-card .icon { font-size: 1.5rem; margin-bottom: 8px; }
+        .connector-card .tools { color: var(--muted); font-size: 0.75rem; }
+
+        /* How it works */
+        .how {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+        }
+        .how h2 { font-size: 1.75rem; margin-bottom: 32px; text-align: center; }
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+        @media (max-width: 640px) { .steps { grid-template-columns: 1fr; } }
+        .step {
+            text-align: center;
+        }
+        .step .num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--green);
+            color: #000;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .step h3 { font-size: 1rem; margin-bottom: 8px; }
+        .step p { color: var(--muted); font-size: 0.85rem; }
+
+        /* CTA */
+        .bottom-cta {
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .bottom-cta h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+        .bottom-cta p {
+            color: var(--muted);
+            margin-bottom: 32px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        footer a { color: var(--muted); text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <section class="hero">
+        <h1>CI for <span>agent prompt changes</span></h1>
+        <p class="subtitle">
+            You changed the system prompt. Did it break the Gmail connector?
+            The calendar tool? The multi-step workflow? Hill Climb tells you before you deploy.
+        </p>
+        <div class="cta">
+            <a href="https://github.com/SamuelChien/hillclimb" class="btn btn-primary">View on GitHub</a>
+            <a href="#demo" class="btn btn-secondary">See the demo</a>
+        </div>
+    </section>
+
+    <div class="install">
+        <code>pip install fastapi uvicorn && python mock-services/app.py</code>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText('pip install fastapi uvicorn && python mock-services/app.py')">Copy</button>
+    </div>
+
+    <section class="problem">
+        <h2>The problem every agent team hits</h2>
+        <div class="problem-grid">
+            <div class="problem-card">
+                <div class="label before">Before Hill Climb</div>
+                <p>You edit the system prompt to fix a JSON formatting bug. It works for Gmail. But now the calendar connector hallucinates event times and the multi-step Drive workflow silently breaks. You find out from a customer ticket.</p>
+            </div>
+            <div class="problem-card">
+                <div class="label after">After Hill Climb</div>
+                <p>You run 4 scenarios before and after your change. The comparison report shows email: STABLE, calendar: FIXED, sheets: STABLE, multi-tool: STABLE. Zero regressions. You deploy with confidence.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="numbers">
+        <h2>The numbers</h2>
+        <div class="num-grid">
+            <div class="num-card">
+                <div class="number">10</div>
+                <div class="desc">Enterprise connector toolkits with stateful mocks</div>
+            </div>
+            <div class="num-card">
+                <div class="number">60+</div>
+                <div class="desc">Tool handlers (create, read, update, delete, search)</div>
+            </div>
+            <div class="num-card">
+                <div class="number">4/4</div>
+                <div class="desc">Live Claude agent eval scenarios passing</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="demo" id="demo">
+        <h2>The CI loop</h2>
+        <p class="subtitle">Three commands. Before your change, after your change, done.</p>
+
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+            </div>
+            <div class="terminal-body">
+                <span class="comment"># Before your prompt change</span><br>
+                <span class="prompt">$</span> bash demo/compare.sh baseline<br>
+                <span class="output">Baseline saved: 4/4 scenarios passed</span><br>
+                <br>
+                <span class="comment"># Make your change (edit system prompt, tool description, skill...)</span><br>
+                <br>
+                <span class="comment"># After your change</span><br>
+                <span class="prompt">$</span> bash demo/compare.sh revision<br>
+                <br>
+                <span class="output">Hill Climb Comparison Report</span><br>
+                <span class="output">----------------------------</span><br>
+                <span class="output">| Scenario        | Baseline | Revision | Status    |</span><br>
+                <span class="output">|-----------------|----------|----------|-----------|</span><br>
+                <span class="output">| email_send      | PASS     | PASS     | <span class="pass">STABLE</span>    |</span><br>
+                <span class="output">| calendar_create | FAIL     | PASS     | <span class="pass">FIXED</span>     |</span><br>
+                <span class="output">| sheet_create    | PASS     | PASS     | <span class="pass">STABLE</span>    |</span><br>
+                <span class="output">| multi_tool      | PASS     | PASS     | <span class="pass">STABLE</span>    |</span><br>
+                <br>
+                <span class="verdict">VERDICT: SAFE TO DEPLOY</span><br>
+                <span class="output">Pass rate improved (75.0% -> 100.0%), no regressions.</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="connectors">
+        <h2>10 enterprise connectors, mocked</h2>
+        <div class="connector-grid">
+            <div class="connector-card">
+                <div class="icon">📧</div>
+                <div>Gmail</div>
+                <div class="tools">3 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">📁</div>
+                <div>Google Drive</div>
+                <div class="tools">7 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">📅</div>
+                <div>Google Calendar</div>
+                <div class="tools">5 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">📊</div>
+                <div>Google Sheets</div>
+                <div class="tools">10 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">📨</div>
+                <div>Outlook</div>
+                <div class="tools">4 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">💬</div>
+                <div>Slack</div>
+                <div class="tools">2 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">🏢</div>
+                <div>HubSpot</div>
+                <div class="tools">10 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">🐙</div>
+                <div>GitHub</div>
+                <div class="tools">2 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">🎙</div>
+                <div>Gong</div>
+                <div class="tools">4 tools</div>
+            </div>
+            <div class="connector-card">
+                <div class="icon">👥</div>
+                <div>MS Teams</div>
+                <div class="tools">4 tools</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how">
+        <h2>How it works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="num">1</div>
+                <h3>Seed</h3>
+                <p>Pre-populate mock state with your test data. CRM leads, Drive files, calendar events.</p>
+            </div>
+            <div class="step">
+                <div class="num">2</div>
+                <h3>Run</h3>
+                <p>Point your agent at the mock server. Every tool call hits real handlers backed by SQLite.</p>
+            </div>
+            <div class="step">
+                <div class="num">3</div>
+                <h3>Assert</h3>
+                <p>Check the resulting state. Was the email sent? Was the sheet created? Was the right tool called?</p>
+            </div>
+            <div class="step">
+                <div class="num">4</div>
+                <h3>Compare</h3>
+                <p>Run baseline before your change, revision after. The report shows what improved and what regressed.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="bottom-cta">
+        <h2>Your prompt change is one eval away from safe</h2>
+        <p>Hill Climb is open source, MIT licensed, and works with any agent framework that uses Composio connectors.</p>
+        <div class="cta">
+            <a href="https://github.com/SamuelChien/hillclimb" class="btn btn-primary">Get started on GitHub</a>
+            <a href="mailto:samuelchien821@gmail.com?subject=Hill Climb for our team" class="btn btn-secondary">Talk to us</a>
+        </div>
+    </section>
+</div>
+
+<footer>
+    <div class="container">
+        <p>Hill Climb v0.1.0 &mdash; <a href="https://github.com/SamuelChien/hillclimb">GitHub</a> &mdash; MIT License</p>
+    </div>
+</footer>
+
+</body>
+</html>

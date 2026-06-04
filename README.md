@@ -204,6 +204,23 @@ curl http://localhost:8081/state/drive              # Drive files
 curl -X POST http://localhost:8081/reset
 ```
 
+## Session Ingestion (agentwatch-ai)
+
+For automated failure detection across hundreds of sessions, Hill Climb includes the `agentwatch-ai` CLI:
+
+```bash
+npm install -g agentwatch-ai
+
+agentwatch scan --since 7d          # Ingest sessions, detect failure patterns
+agentwatch climb <scanId> --live    # Full hill-climb loop with live evals
+agentwatch trend                    # Longitudinal improvement tracking
+agentwatch impact <skill>           # Measure if a skill fix actually worked
+```
+
+agentwatch-ai scans your Claude Code sessions (`~/.claude/projects/`), clusters failures by priority (frequency x severity x confidence x fixability), investigates root causes, generates eval scenarios, and opens PRs when merge gates pass. 22 root-cause categories, 9 evaluators, 7 merge gates, 90 tests.
+
+The mock connector library (this repo) and agentwatch-ai work together: agentwatch finds the failures, Hill Climb mocks let you reproduce and test them.
+
 ## Contributing
 
 Every customer's eval tasks and mock connector improvements make the library better for everyone. PRs welcome for:

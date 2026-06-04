@@ -6,14 +6,24 @@
 #   2. AFTER your prompt change  → compares against baseline
 #
 # Usage:
-#   bash demo/compare.sh baseline    # Save baseline results
-#   bash demo/compare.sh revision    # Compare against baseline
+#   bash demo/compare.sh baseline    # Save baseline results (live Claude agent)
+#   bash demo/compare.sh revision    # Compare against baseline (live Claude agent)
 #   bash demo/compare.sh report      # Show comparison report
+#   bash demo/compare.sh baseline --simulate   # Use direct curl (no Claude)
+#   bash demo/compare.sh revision --simulate   # Use direct curl (no Claude)
 
 set -e
 cd "$(dirname "$0")/.."
 
 MOCK_URL="${HILLCLIMB_MOCK_URL:-http://localhost:8081}"
+
+# Parse --simulate flag from any argument position
+SIMULATE=false
+for arg in "$@"; do
+    if [ "$arg" = "--simulate" ]; then
+        SIMULATE=true
+    fi
+done
 RESULTS_DIR="demo/results"
 BASELINE_FILE="$RESULTS_DIR/baseline.json"
 REVISION_FILE="$RESULTS_DIR/revision.json"
@@ -48,39 +58,80 @@ run_scenarios() {
                 -d '{"drive_files": [{"id": "file_expense_report", "name": "expense_report_may.txt", "mime_type": "text/plain", "content": "Expense Report\nTravel: $2,340\nMeals: $890\nSoftware: $1,200\nTotal: $4,770"}]}' > /dev/null
         fi
 
-        # Simulate agent tool calls (same as agent-eval-demo.sh)
-        case "$name" in
-            email_send)
-                curl -sf -X POST "$MOCK_URL/api/v3/tools/GMAIL_SEND_EMAIL/execute" \
-                    -H "Content-Type: application/json" \
-                    -d '{"arguments": {"to": "alice@example.com", "subject": "Weekly Report", "body": "Progress update."}}' > /dev/null
-                ;;
-            calendar_create)
-                curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLECALENDAR_CREATE_EVENT/execute" \
-                    -H "Content-Type: application/json" \
-                    -d '{"arguments": {"summary": "Daily Standup", "start": "2026-06-05T10:00:00Z", "end": "2026-06-05T10:30:00Z"}}' > /dev/null
-                ;;
-            sheet_create)
-                curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLESHEETS_CREATE_GOOGLE_SHEET1/execute" \
-                    -H "Content-Type: application/json" \
-                    -d '{"arguments": {"title": "Sprint Metrics"}}' > /dev/null
-                SSID=$(curl -sf "$MOCK_URL/state/spreadsheets" | python -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
-                curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLESHEETS_APPEND_ROWS/execute" \
-                    -H "Content-Type: application/json" \
-                    -d "{\"arguments\": {\"spreadsheet_id\": \"$SSID\", \"rows\": [[\"Task\",\"Status\"],[\"Auth\",\"Done\"],[\"Metrics\",\"WIP\"]]}}" > /dev/null
-                ;;
-            multi_tool)
-                curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLEDRIVE_FIND_FILE/execute" \
-                    -H "Content-Type: application/json" \
-                    -d '{"arguments": {"query": "expense_report"}}' > /dev/null
-                curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLEDRIVE_GET_FILE_CONTENT/execute" \
-                    -H "Content-Type: application/json" \
-                    -d '{"arguments": {"file_id": "file_expense_report"}}' > /dev/null
-                curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLESHEETS_CREATE_GOOGLE_SHEET1/execute" \
-                    -H "Content-Type: application/json" \
-                    -d '{"arguments": {"title": "May Expenses"}}' > /dev/null
-                ;;
-        esac
+        if [ "$SIMULATE" = true ]; then
+            # --simulate: direct curl calls (no Claude agent)
+            case "$name" in
+                email_send)
+                    curl -sf -X POST "$MOCK_URL/api/v3/tools/GMAIL_SEND_EMAIL/execute" \
+                        -H "Content-Type: application/json" \
+                        -d '{"arguments": {"to": "alice@example.com", "subject": "Weekly Report", "body": "Progress update."}}' > /dev/null
+                    ;;
+                calendar_create)
+                    curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLECALENDAR_CREATE_EVENT/execute" \
+                        -H "Content-Type: application/json" \
+                        -d '{"arguments": {"summary": "Daily Standup", "start": "2026-06-05T10:00:00Z", "end": "2026-06-05T10:30:00Z"}}' > /dev/null
+                    ;;
+                sheet_create)
+                    curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLESHEETS_CREATE_GOOGLE_SHEET1/execute" \
+                        -H "Content-Type: application/json" \
+                        -d '{"arguments": {"title": "Sprint Metrics"}}' > /dev/null
+                    SSID=$(curl -sf "$MOCK_URL/state/spreadsheets" | python -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
+                    curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLESHEETS_APPEND_ROWS/execute" \
+                        -H "Content-Type: application/json" \
+                        -d "{\"arguments\": {\"spreadsheet_id\": \"$SSID\", \"rows\": [[\"Task\",\"Status\"],[\"Auth\",\"Done\"],[\"Metrics\",\"WIP\"]]}}" > /dev/null
+                    ;;
+                multi_tool)
+                    curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLEDRIVE_FIND_FILE/execute" \
+                        -H "Content-Type: application/json" \
+                        -d '{"arguments": {"query": "expense_report"}}' > /dev/null
+                    curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLEDRIVE_GET_FILE_CONTENT/execute" \
+                        -H "Content-Type: application/json" \
+                        -d '{"arguments": {"file_id": "file_expense_report"}}' > /dev/null
+                    curl -sf -X POST "$MOCK_URL/api/v3/tools/GOOGLESHEETS_CREATE_GOOGLE_SHEET1/execute" \
+                        -H "Content-Type: application/json" \
+                        -d '{"arguments": {"title": "May Expenses"}}' > /dev/null
+                    ;;
+            esac
+        else
+            # Live: real Claude agent execution via claude -p
+            case "$name" in
+                email_send)
+                    claude -p "Run this curl command and return the output:
+curl -s -X POST $MOCK_URL/api/v3/tools/GMAIL_SEND_EMAIL/execute -H 'Content-Type: application/json' -d '{\"arguments\": {\"to\": \"alice@example.com\", \"subject\": \"Weekly Report\", \"body\": \"Progress update.\"}}'
+Execute the command now." --output-format text --dangerously-skip-permissions 2>/dev/null || true
+                    ;;
+                calendar_create)
+                    claude -p "Run this curl command and return the output:
+curl -s -X POST $MOCK_URL/api/v3/tools/GOOGLECALENDAR_CREATE_EVENT/execute -H 'Content-Type: application/json' -d '{\"arguments\": {\"summary\": \"Daily Standup\", \"start\": \"2026-06-05T10:00:00Z\", \"end\": \"2026-06-05T10:30:00Z\"}}'
+Execute the command now." --output-format text --dangerously-skip-permissions 2>/dev/null || true
+                    ;;
+                sheet_create)
+                    claude -p "Run these two curl commands in order. First create the sheet, get the spreadsheetId from the response, then use it to append rows.
+
+Step 1:
+curl -s -X POST $MOCK_URL/api/v3/tools/GOOGLESHEETS_CREATE_GOOGLE_SHEET1/execute -H 'Content-Type: application/json' -d '{\"arguments\": {\"title\": \"Sprint Metrics\"}}'
+
+Step 2 (use the spreadsheetId from step 1):
+curl -s -X POST $MOCK_URL/api/v3/tools/GOOGLESHEETS_APPEND_ROWS/execute -H 'Content-Type: application/json' -d '{\"arguments\": {\"spreadsheet_id\": \"REPLACE_WITH_ID\", \"rows\": [[\"Task\", \"Status\"], [\"Auth\", \"Done\"], [\"Metrics\", \"WIP\"]]}}'
+
+Execute both commands now." --output-format text --dangerously-skip-permissions 2>/dev/null || true
+                    ;;
+                multi_tool)
+                    claude -p "Run these three curl commands in order:
+
+Step 1 - Search for the file:
+curl -s -X POST $MOCK_URL/api/v3/tools/GOOGLEDRIVE_FIND_FILE/execute -H 'Content-Type: application/json' -d '{\"arguments\": {\"query\": \"expense_report\"}}'
+
+Step 2 - Read the file content (use file_id from step 1, should be 'file_expense_report'):
+curl -s -X POST $MOCK_URL/api/v3/tools/GOOGLEDRIVE_GET_FILE_CONTENT/execute -H 'Content-Type: application/json' -d '{\"arguments\": {\"file_id\": \"file_expense_report\"}}'
+
+Step 3 - Create a summary sheet:
+curl -s -X POST $MOCK_URL/api/v3/tools/GOOGLESHEETS_CREATE_GOOGLE_SHEET1/execute -H 'Content-Type: application/json' -d '{\"arguments\": {\"title\": \"May Expenses\"}}'
+
+Execute all three commands now." --output-format text --dangerously-skip-permissions 2>/dev/null || true
+                    ;;
+            esac
+        fi
 
         # Get tool calls for this scenario
         CALLS=$(curl -sf "$MOCK_URL/state/tool-calls")
@@ -160,9 +211,22 @@ run_scenarios() {
     echo "$passed/$total"
 }
 
-case "${1:-report}" in
+# Find the action argument (first non-flag arg)
+ACTION="report"
+for arg in "$@"; do
+    if [ "$arg" != "--simulate" ]; then
+        ACTION="$arg"
+        break
+    fi
+done
+
+case "$ACTION" in
     baseline)
-        echo -e "${BLUE}Running baseline...${NC}"
+        if [ "$SIMULATE" = true ]; then
+            echo -e "${BLUE}Running baseline (simulated, direct curl)...${NC}"
+        else
+            echo -e "${BLUE}Running baseline (live Claude agent)...${NC}"
+        fi
         if ! curl -sf "$MOCK_URL/health" > /dev/null 2>&1; then
             echo "Starting mock server..."
             python mock-services/app.py &
@@ -181,7 +245,11 @@ case "${1:-report}" in
             echo -e "${RED}No baseline found. Run 'bash demo/compare.sh baseline' first.${NC}"
             exit 1
         fi
-        echo -e "${BLUE}Running revision...${NC}"
+        if [ "$SIMULATE" = true ]; then
+            echo -e "${BLUE}Running revision (simulated, direct curl)...${NC}"
+        else
+            echo -e "${BLUE}Running revision (live Claude agent)...${NC}"
+        fi
         if ! curl -sf "$MOCK_URL/health" > /dev/null 2>&1; then
             echo "Starting mock server..."
             python mock-services/app.py &
@@ -297,11 +365,15 @@ print(sum(1 for n in b if b[n] and not r.get(n, False)))
         ;;
 
     *)
-        echo "Usage: bash demo/compare.sh [baseline|revision|report]"
+        echo "Usage: bash demo/compare.sh [baseline|revision|report] [--simulate]"
         echo ""
         echo "  baseline  Run scenarios and save as baseline"
         echo "  revision  Run scenarios and compare against baseline"
         echo "  report    Show comparison report (needs both baseline and revision)"
+        echo ""
+        echo "Options:"
+        echo "  --simulate  Use direct curl calls instead of live Claude agent"
+        echo "              (faster, deterministic, no Claude API needed)"
         exit 1
         ;;
 esac
