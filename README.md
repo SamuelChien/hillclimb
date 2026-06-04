@@ -34,6 +34,25 @@ npm install -g hillclimb
 hillclimb quickstart
 ```
 
+## Try the Demo (2 minutes)
+
+```bash
+git clone https://github.com/SamuelChien/hillclimb.git
+cd hillclimb
+pip install fastapi uvicorn
+
+# Demo 1: CRM workflow (seed data, execute 5 tool calls, verify state)
+python mock-services/app.py &
+bash demo/demo.sh
+
+# Demo 2: Agent eval suite (4 scenarios with assertions)
+bash demo/agent-eval-demo.sh
+```
+
+Demo 1 shows the mock connector in action: seed CRM leads, search Drive, read files, send email, create calendar event, update spreadsheet, verify everything via the audit log.
+
+Demo 2 shows the eval loop: run 4 scenarios (email, calendar, sheets, multi-tool), check assertions, get pass/fail results. This is how you test prompt changes before deploying.
+
 ## What's Inside
 
 ### Mock Connector Library (`mock-services/`)
