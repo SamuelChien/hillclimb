@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+node_modules/
+dist/
+.env
+.env.*
+*.db
+.hillclimb/
+.DS_Store

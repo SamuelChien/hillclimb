@@ -1,0 +1,24 @@
+id: email_send
+name: Send an email via Gmail
+description: >
+  Agent should compose and send an email using Gmail tools.
+  Tests correct parameter extraction (to, subject, body).
+
+turns:
+  - role: user
+    content: >
+      Send an email to alice@example.com with the subject "Q2 Report Ready"
+      and let her know the quarterly report has been uploaded to the shared drive.
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should have used GMAIL_SEND_EMAIL with:
+      - to: alice@example.com
+      - subject containing "Q2 Report"
+      - body mentioning the quarterly report and shared drive
+      Score 1.0 if sent correctly, 0.5 if tool called with wrong params, 0.0 if no tool call.
+    weight: 3.0
+
+tags: [gmail, tool-call, send]
+timeout_seconds: 90

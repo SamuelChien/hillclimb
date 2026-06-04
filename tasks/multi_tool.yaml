@@ -1,0 +1,27 @@
+id: multi_tool
+name: Cross-connector workflow
+description: >
+  Agent should execute a multi-step workflow across multiple connectors:
+  create a spreadsheet, email the link, and schedule a review meeting.
+  Tests end-to-end orchestration across Sheets + Gmail + Calendar.
+
+turns:
+  - role: user
+    content: >
+      I need you to:
+      1. Create a Google Sheet called "Budget Planning 2026"
+      2. Email the sheet link to bob@example.com with subject "Budget Sheet Created"
+      3. Schedule a 1-hour "Budget Review" meeting for next Monday at 2pm
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should have executed three distinct tool calls:
+      1. GOOGLESHEETS to create "Budget Planning 2026"
+      2. GMAIL_SEND_EMAIL to bob@example.com with the sheet link in the body
+      3. GOOGLECALENDAR_CREATE_EVENT for "Budget Review" on Monday at 2pm
+      Score 1.0 if all three completed, 0.67 if two, 0.33 if one, 0.0 if none.
+    weight: 5.0
+
+tags: [google-sheets, gmail, google-calendar, multi-service, orchestration]
+timeout_seconds: 180

@@ -1,0 +1,31 @@
+id: sheet_append
+name: Append data to Google Sheet
+description: >
+  Agent should create a Google Sheet and append rows of data.
+  Verifies the agent makes the correct GOOGLESHEETS tool calls
+  and that the mock sheet state has the expected data.
+
+turns:
+  - role: user
+    content: >
+      Please create a new Google Sheet called "Q2 Sales Report" and add these rows:
+      - Product A, 150 units, $12,000
+      - Product B, 230 units, $18,400
+      - Product C, 90 units, $7,200
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should have:
+      1. Created a new Google Sheet titled "Q2 Sales Report"
+      2. Added 3 rows of sales data (Product A, B, C with units and revenue)
+      3. Used GOOGLESHEETS tool calls (not just described what to do)
+      Score 1.0 if all three are met, 0.5 if tools were called but data is incomplete, 0.0 if no tool calls.
+    weight: 3.0
+  - type: response_contains
+    target: response
+    expected: "Sheet"
+    weight: 1.0
+
+tags: [google-sheets, tool-call, create, append]
+timeout_seconds: 120

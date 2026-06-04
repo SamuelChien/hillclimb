@@ -1,0 +1,25 @@
+id: outlook_email
+name: Send email via Outlook
+description: >
+  Agent should send an email using Outlook tools instead of Gmail.
+  Tests correct connector selection when the user specifies Outlook.
+
+turns:
+  - role: user
+    content: >
+      Using Outlook, send an email to carol@example.com with subject
+      "Meeting Notes" and include a brief summary of today's discussion
+      about the product roadmap.
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should have used OUTLOOK_SEND_EMAIL (not GMAIL_SEND_EMAIL).
+      - to: carol@example.com
+      - subject: "Meeting Notes"
+      - body mentioning product roadmap discussion
+      Score 1.0 if correct connector used, 0.5 if Gmail used instead, 0.0 if no tool call.
+    weight: 3.0
+
+tags: [outlook, tool-call, send, connector-selection]
+timeout_seconds: 90

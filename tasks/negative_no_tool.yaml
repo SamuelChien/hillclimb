@@ -1,0 +1,21 @@
+id: negative_no_tool
+name: Question that should NOT trigger a tool call
+description: >
+  Agent should answer a general question WITHOUT using any connector tools.
+  Tests that the agent doesn't over-trigger on unrelated requests.
+
+turns:
+  - role: user
+    content: >
+      What's the difference between a Google Sheet and an Excel spreadsheet?
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should NOT have used any tool calls (GOOGLESHEETS, GOOGLEDRIVE, etc.).
+      It should provide a text explanation of the differences.
+      Score 1.0 if no tools used and good explanation, 0.5 if tools used unnecessarily, 0.0 if only tools and no explanation.
+    weight: 3.0
+
+tags: [negative-case, no-tool, over-trigger]
+timeout_seconds: 60

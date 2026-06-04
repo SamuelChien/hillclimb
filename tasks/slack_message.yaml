@@ -1,0 +1,22 @@
+id: slack_message
+name: Send a Slack message
+description: >
+  Agent should send a message to a Slack channel.
+  Tests Slack connector tool calls.
+
+turns:
+  - role: user
+    content: >
+      Post a message in the #engineering Slack channel saying
+      "Deployment complete. All services green."
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should have used SLACK_SEND_MESSAGE with channel
+      targeting #engineering and the deployment message.
+      Score 1.0 if sent correctly, 0.5 if wrong channel, 0.0 if no tool call.
+    weight: 3.0
+
+tags: [slack, tool-call, send]
+timeout_seconds: 90

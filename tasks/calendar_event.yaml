@@ -1,0 +1,26 @@
+id: calendar_event
+name: Create a calendar event
+description: >
+  Agent should create a Google Calendar event.
+  Tests GOOGLECALENDAR tool calls and correct parameter extraction.
+
+turns:
+  - role: user
+    content: >
+      Schedule a team standup meeting for tomorrow at 10am for 30 minutes.
+      Title it "Daily Standup".
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should have used a GOOGLECALENDAR tool call to create an event.
+      The event should be titled "Daily Standup" with appropriate start/end times.
+      Score 1.0 if created correctly, 0.5 if tool called with wrong params, 0.0 if no tool call.
+    weight: 3.0
+  - type: response_contains
+    target: response
+    expected: "standup"
+    weight: 1.0
+
+tags: [google-calendar, tool-call, create]
+timeout_seconds: 90

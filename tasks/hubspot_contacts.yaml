@@ -1,0 +1,24 @@
+id: hubspot_contacts
+name: Search and update HubSpot contacts
+description: >
+  Agent should search for contacts in HubSpot and update their properties.
+  Tests CRM connector tool calls with search + batch update.
+
+turns:
+  - role: user
+    content: >
+      Find all contacts in HubSpot with the last name "Bench" and update
+      their lifecycle stage to "customer".
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should have:
+      1. Used HUBSPOT_SEARCH_CONTACTS_BY_CRITERIA or HUBSPOT_SEARCH_CRM_OBJECTS_BY_CRITERIA
+         to find contacts with last name "Bench"
+      2. Used HUBSPOT_UPDATE_A_BATCH_OF_CONTACTS to update lifecycle stage
+      Score 1.0 if both done, 0.5 if search only, 0.0 if no tool calls.
+    weight: 3.0
+
+tags: [hubspot, crm, tool-call, search, update]
+timeout_seconds: 120

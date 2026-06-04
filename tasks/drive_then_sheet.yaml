@@ -1,0 +1,40 @@
+id: drive_then_sheet
+name: Find file on Drive and create sheet from it
+description: >
+  Agent should find a file on Google Drive, read its content, then create
+  a structured Google Sheet from the data. Tests multi-service orchestration
+  with seeded Drive content.
+
+seed:
+  drive_files:
+    - id: file_expense_report
+      name: "expense_report_may.txt"
+      mime_type: "text/plain"
+      content: |
+        Expense Report - May 2026
+        Travel: $2,340
+        Meals: $890
+        Software: $1,200
+        Office Supplies: $340
+        Total: $4,770
+
+turns:
+  - role: user
+    content: >
+      I uploaded an expense report to Google Drive called "expense_report_may".
+      Can you find it, read the contents, and create a Google Sheet with the
+      expense categories and amounts in a proper table format?
+
+assertions:
+  - type: llm_judge
+    target: >
+      The assistant should have:
+      1. Searched Google Drive for the expense report file
+      2. Read the file content (Travel $2340, Meals $890, Software $1200, Office $340)
+      3. Created a new Google Sheet with the data in structured rows
+      All three steps should use actual tool calls (GOOGLEDRIVE + GOOGLESHEETS).
+      Score 1.0 if all done, 0.5 if partial, 0.0 if no tools used.
+    weight: 4.0
+
+tags: [google-drive, google-sheets, multi-service, seed, orchestration]
+timeout_seconds: 150
