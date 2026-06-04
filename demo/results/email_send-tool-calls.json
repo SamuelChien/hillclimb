@@ -1,0 +1,1 @@
+[{"id":1,"action":"GMAIL_SEND_EMAIL","input_json":"{\"to\": \"alice@example.com\", \"subject\": \"Weekly Report\", \"body\": \"Dashboard project progress: completed auth module, started metrics panel.\"}","output_json":"{\"id\": \"msg_654d76122a\", \"labelIds\": [\"SENT\"], \"threadId\": \"thread_msg_654d76122a\"}","success":1,"duration_ms":0,"created_at":"2026-06-04 05:52:08"}]

@@ -1,0 +1,9 @@
+{"run_type": "baseline", "timestamp": "2026-06-04T06:03:52Z", "scenarios": [
+  {"name": "email_send", "pass": true, "tool_calls": 1, "assertions_passed": 1, "assertions_total": 1}
+,
+  {"name": "calendar_create", "pass": true, "tool_calls": 1, "assertions_passed": 1, "assertions_total": 1}
+,
+  {"name": "sheet_create", "pass": true, "tool_calls": 2, "assertions_passed": 2, "assertions_total": 2}
+,
+  {"name": "multi_tool", "pass": true, "tool_calls": 3, "assertions_passed": 2, "assertions_total": 2}
+], "summary": {"total": 4, "passed": 4, "failed": 0, "pass_rate": 100.0}}
