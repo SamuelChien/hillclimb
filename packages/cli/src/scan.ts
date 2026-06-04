@@ -78,6 +78,7 @@ function parseSession(lines: string[], sessionId: string, project: string): Sess
 
     const type = d.type as string;
 
+    // Parse assistant messages for tool_use blocks
     if (type === "assistant") {
       const msg = d.message as Record<string, unknown> | undefined;
       if (!msg) continue;
@@ -92,7 +93,6 @@ function parseSession(lines: string[], sessionId: string, project: string): Sess
           const input = block.input as Record<string, unknown> | undefined;
           toolNames.push(name);
 
-          // Track consecutive Bash
           if (name === "Bash") {
             consecutiveBash++;
             maxConsecutiveBash = Math.max(maxConsecutiveBash, consecutiveBash);
@@ -100,7 +100,6 @@ function parseSession(lines: string[], sessionId: string, project: string): Sess
             consecutiveBash = 0;
           }
 
-          // Track Read → Edit ordering
           if (name === "Read") {
             const path = input?.file_path as string;
             if (path) readFiles.add(path);
@@ -112,25 +111,52 @@ function parseSession(lines: string[], sessionId: string, project: string): Sess
             }
           }
 
-          turns.push({
-            type: "tool_use",
-            toolName: name,
-            toolInput: input ?? {},
-          });
+          turns.push({ type: "tool_use", toolName: name, toolInput: input ?? {} });
+        }
+      }
+    }
+
+    // Parse user messages for tool_result blocks (where errors actually live)
+    if (type === "user") {
+      const msg = d.message as Record<string, unknown> | undefined;
+      if (!msg) continue;
+      const content = msg.content;
+      if (!Array.isArray(content)) continue;
+
+      for (const block of content as Array<Record<string, unknown>>) {
+        if (block.type !== "tool_result") continue;
+
+        const isError = block.is_error === true;
+        let resultText = block.content as string | Array<Record<string, unknown>>;
+        if (Array.isArray(resultText)) {
+          resultText = resultText
+            .filter((x) => typeof x === "object" && x.type === "text")
+            .map((x) => (x as Record<string, string>).text ?? "")
+            .join(" ");
+        }
+        if (typeof resultText !== "string") resultText = "";
+
+        // Detect errors from is_error flag
+        if (isError && resultText) {
+          errorMessages.push(resultText.slice(0, 200));
         }
 
-        if (blockType === "tool_result") {
-          const isError = block.is_error === true;
-          const content = block.content as string | undefined;
-          if (isError && content) {
-            errorMessages.push(content.slice(0, 200));
+        // Detect errors from Bash output content (exit code, traceback, etc.)
+        if (!isError && resultText) {
+          const lower = resultText.toLowerCase().slice(0, 500);
+          if (
+            lower.startsWith("exit code ") &&
+            !lower.startsWith("exit code 0")
+          ) {
+            errorMessages.push(resultText.slice(0, 200));
           }
-          turns.push({
-            type: "tool_result",
-            isError,
-            errorMessage: isError ? content?.slice(0, 200) : undefined,
-          });
         }
+
+        turns.push({
+          type: "tool_result",
+          isError,
+          errorMessage: isError ? resultText.slice(0, 200) : undefined,
+        });
       }
     }
   }

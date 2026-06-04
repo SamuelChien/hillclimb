@@ -448,6 +448,70 @@ function generateTaskYaml(cluster: {
   return lines.join("\n");
 }
 
+// ---- run (full pipeline) ------------------------------------------------
+
+program
+  .command("run")
+  .description("Full pipeline: scan sessions → detect failures → generate report")
+  .option("--since <duration>", "Time window", "7d")
+  .option("--project <path>", "Filter to project")
+  .option("--top <n>", "Number of top clusters to report", "5")
+  .action(async (opts: { since: string; project?: string; top: string }) => {
+    const { scan: scanFn } = await import("./scan.js");
+    const topN = parseInt(opts.top);
+
+    console.log("\n[1/3] Scanning sessions...\n");
+    const result = await scanFn({ since: opts.since, project: opts.project });
+
+    console.log(`Sessions:  ${result.sessionsScanned}`);
+    console.log(`Secrets:   ${result.secretsRedacted} redacted`);
+    console.log(`Tools:     ${result.totalToolCalls} calls`);
+    console.log(`Errors:    ${result.totalErrors}`);
+    console.log(`Clusters:  ${result.clusters.length}`);
+    console.log();
+
+    if (result.clusters.length === 0) {
+      console.log("No failures detected. Nothing to improve.");
+      return;
+    }
+
+    console.log(`[2/3] Top ${topN} failure clusters:\n`);
+    const top = result.clusters.slice(0, topN);
+    for (let i = 0; i < top.length; i++) {
+      const c = top[i];
+      console.log(`  ${i + 1}. [priority ${c.priority}] ${c.title}`);
+      console.log(`     ${c.count}x across ${c.sessions.length} sessions`);
+      if (c.examples[0]) {
+        console.log(`     Example: ${c.examples[0].slice(0, 80)}`);
+      }
+      console.log();
+    }
+
+    console.log("[3/3] Generated eval tasks:\n");
+    for (const c of top) {
+      const yaml = generateTaskYaml(c);
+      const filename = `tasks/${c.id}.yaml`;
+      console.log(`  ${filename}`);
+    }
+
+    console.log(`
+Next steps:
+  1. Review the generated tasks in tasks/
+  2. Start mock server:  python mock-services/app.py &
+  3. Run baseline:       bash demo/compare.sh baseline --simulate
+  4. Make your change
+  5. Run revision:       bash demo/compare.sh revision --simulate
+  6. Check the verdict:  SAFE TO DEPLOY / REGRESSED
+`);
+  });
+
+// ---- version info -------------------------------------------------------
+
+program.on("--help", () => {
+  console.log("\nPipeline: scan → detect → generate → baseline → revise → compare");
+  console.log("Docs: https://samuelchien.github.io/hillclimb/");
+});
+
 // ---------------------------------------------------------------------------
 // Run
 // ---------------------------------------------------------------------------
