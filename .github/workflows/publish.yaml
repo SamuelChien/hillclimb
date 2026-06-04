@@ -10,6 +10,9 @@ permissions:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
+      IMAGE: ghcr.io/samuelchien/hillclimb-mocks
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
@@ -22,8 +25,8 @@ jobs:
           context: mock-services
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/hillclimb-mocks:latest
-            ghcr.io/${{ github.repository_owner }}/hillclimb-mocks:${{ github.ref_name }}
+            ghcr.io/samuelchien/hillclimb-mocks:latest
+            ghcr.io/samuelchien/hillclimb-mocks:${{ github.ref_name }}
 
   npm:
     runs-on: ubuntu-latest
