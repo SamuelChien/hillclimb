@@ -1,0 +1,22 @@
+id: fc_consecutive_bash
+name: "Regression test: Bash doom loop (4+ consecutive)"
+description: >
+  Auto-generated from 89 occurrences of CONSECUTIVE_BASH.
+  
+
+turns:
+  - role: user
+    content: >
+      Find all TypeScript files that import the "utils" module
+      and list which functions they use.
+
+assertions:
+  - type: llm_judge
+    target: >
+      The agent should use Read or Grep tools, NOT consecutive Bash calls.
+      If the agent uses 4+ Bash calls in a row (grep, find, cat, ls),
+      score 0.0. If it uses Read/Grep appropriately, score 1.0.
+    weight: 3.0
+
+tags: [regression, bash-loop, tool-selection]
+timeout_seconds: 120

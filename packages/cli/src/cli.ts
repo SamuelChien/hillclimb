@@ -264,6 +264,190 @@ async function checkAssertion(a: TaskAssertion): Promise<AssertionResult> {
   }
 }
 
+// ---- scan ---------------------------------------------------------------
+
+program
+  .command("scan")
+  .description("Scan Claude Code sessions for failure patterns")
+  .option("--since <duration>", "Time window (e.g. 7d, 24h, 3d)", "7d")
+  .option("--project <path>", "Filter to a specific project")
+  .option("--json", "Output machine-readable JSON")
+  .action(async (opts: { since: string; project?: string; json?: boolean }) => {
+    const { scan } = await import("./scan.js");
+    const result = await scan({
+      since: opts.since,
+      project: opts.project,
+      json: opts.json,
+    });
+
+    if (opts.json) {
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    console.log(`\nHill Climb Session Scan`);
+    console.log(`${"=".repeat(50)}`);
+    console.log(`Sessions scanned:  ${result.sessionsScanned}`);
+    console.log(`Secrets redacted:  ${result.secretsRedacted}`);
+    console.log(`Total tool calls:  ${result.totalToolCalls}`);
+    console.log(`Total errors:      ${result.totalErrors}`);
+    console.log(`Failure clusters:  ${result.clusters.length}`);
+    console.log();
+
+    if (result.clusters.length === 0) {
+      console.log("No failure patterns detected. Your agent is doing well.");
+      return;
+    }
+
+    console.log("Top failure clusters (by priority):");
+    console.log();
+    for (const c of result.clusters.slice(0, 10)) {
+      const bar = "█".repeat(Math.min(c.priority, 20));
+      console.log(`  [${c.priority.toString().padStart(3)}] ${c.title}`);
+      console.log(`        ${bar} ${c.count} occurrences across ${c.sessions.length} sessions`);
+      if (c.examples.length > 0) {
+        console.log(`        Example: ${c.examples[0].slice(0, 80)}`);
+      }
+      console.log();
+    }
+
+    console.log(`Next: hillclimb generate --cluster ${result.clusters[0]?.id ?? "<cluster-id>"}`);
+  });
+
+// ---- generate -----------------------------------------------------------
+
+program
+  .command("generate")
+  .description("Generate eval task YAML from a failure cluster")
+  .option("--cluster <id>", "Cluster ID from scan results")
+  .option("--from-scan <file>", "Path to scan result JSON")
+  .action(async (opts: { cluster?: string; fromScan?: string }) => {
+    if (!opts.fromScan) {
+      console.log("Run 'hillclimb scan --json > scan.json' first, then:");
+      console.log("  hillclimb generate --from-scan scan.json --cluster <id>");
+      return;
+    }
+    const raw = await readFile(resolve(process.cwd(), opts.fromScan), "utf-8");
+    const scanResult = JSON.parse(raw);
+    const clusters = scanResult.clusters || [];
+
+    const target = opts.cluster
+      ? clusters.find((c: { id: string }) => c.id === opts.cluster)
+      : clusters[0];
+
+    if (!target) {
+      console.log(`Cluster ${opts.cluster ?? "(none)"} not found.`);
+      console.log(`Available: ${clusters.map((c: { id: string }) => c.id).join(", ")}`);
+      return;
+    }
+
+    const yaml = generateTaskYaml(target);
+    console.log(yaml);
+    console.log(`\n# Save this to tasks/${target.id}.yaml`);
+  });
+
+function generateTaskYaml(cluster: {
+  id: string;
+  category: string;
+  title: string;
+  count: number;
+  examples: string[];
+}): string {
+  const lines = [
+    `id: ${cluster.id}`,
+    `name: "Regression test: ${cluster.title}"`,
+    `description: >`,
+    `  Auto-generated from ${cluster.count} occurrences of ${cluster.category}.`,
+    `  ${cluster.examples[0] ? "Example: " + cluster.examples[0].slice(0, 100) : ""}`,
+    ``,
+  ];
+
+  switch (cluster.category) {
+    case "CONSECUTIVE_BASH":
+      lines.push(
+        `turns:`,
+        `  - role: user`,
+        `    content: >`,
+        `      Find all TypeScript files that import the "utils" module`,
+        `      and list which functions they use.`,
+        ``,
+        `assertions:`,
+        `  - type: llm_judge`,
+        `    target: >`,
+        `      The agent should use Read or Grep tools, NOT consecutive Bash calls.`,
+        `      If the agent uses 4+ Bash calls in a row (grep, find, cat, ls),`,
+        `      score 0.0. If it uses Read/Grep appropriately, score 1.0.`,
+        `    weight: 3.0`,
+        ``,
+        `tags: [regression, bash-loop, tool-selection]`,
+        `timeout_seconds: 120`
+      );
+      break;
+
+    case "EDIT_WITHOUT_READ":
+    case "FILE_NOT_READ":
+      lines.push(
+        `turns:`,
+        `  - role: user`,
+        `    content: >`,
+        `      Add a new function called "validateInput" to src/utils.ts`,
+        `      that checks if a string is valid JSON.`,
+        ``,
+        `assertions:`,
+        `  - type: llm_judge`,
+        `    target: >`,
+        `      The agent MUST Read src/utils.ts before attempting to Edit it.`,
+        `      If Edit is called without a prior Read on the same file, score 0.0.`,
+        `      If Read then Edit, score 1.0.`,
+        `    weight: 3.0`,
+        ``,
+        `tags: [regression, read-before-edit, prerequisite]`,
+        `timeout_seconds: 90`
+      );
+      break;
+
+    case "JSON_MALFORMED":
+      lines.push(
+        `turns:`,
+        `  - role: user`,
+        `    content: >`,
+        `      Create a Google Sheet with this data and send it via email:`,
+        `      Name: Alice, Revenue: $12,000, Status: Active`,
+        ``,
+        `assertions:`,
+        `  - type: llm_judge`,
+        `    target: >`,
+        `      All tool call inputs must be valid JSON. Check that no tool_use block`,
+        `      has malformed JSON in its arguments. Score 1.0 if all valid, 0.0 if any`,
+        `      parse errors.`,
+        `    weight: 4.0`,
+        ``,
+        `tags: [regression, json-format, tool-arguments]`,
+        `timeout_seconds: 120`
+      );
+      break;
+
+    default:
+      lines.push(
+        `turns:`,
+        `  - role: user`,
+        `    content: >`,
+        `      [TODO: Add a user prompt that would trigger this failure pattern]`,
+        ``,
+        `assertions:`,
+        `  - type: llm_judge`,
+        `    target: >`,
+        `      [TODO: Define what correct behavior looks like for "${cluster.title}"]`,
+        `    weight: 3.0`,
+        ``,
+        `tags: [regression, auto-generated, ${cluster.category.toLowerCase()}]`,
+        `timeout_seconds: 120`
+      );
+  }
+
+  return lines.join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // Run
 // ---------------------------------------------------------------------------

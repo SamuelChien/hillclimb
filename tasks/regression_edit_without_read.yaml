@@ -1,0 +1,22 @@
+id: fc_edit_without_read
+name: "Regression test: Edit/Write without prior Read"
+description: >
+  Auto-generated from 80 occurrences of EDIT_WITHOUT_READ.
+  
+
+turns:
+  - role: user
+    content: >
+      Add a new function called "validateInput" to src/utils.ts
+      that checks if a string is valid JSON.
+
+assertions:
+  - type: llm_judge
+    target: >
+      The agent MUST Read src/utils.ts before attempting to Edit it.
+      If Edit is called without a prior Read on the same file, score 0.0.
+      If Read then Edit, score 1.0.
+    weight: 3.0
+
+tags: [regression, read-before-edit, prerequisite]
+timeout_seconds: 90
