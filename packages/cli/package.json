@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "description": "CLI for Hill Climb eval harness — seed, test, and inspect mock connector state",
   "license": "MIT",
+  "author": "Samuel Chien",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SamuelChien/hillclimb"
+  },
+  "keywords": ["agent", "eval", "mock", "connector", "ci", "testing", "llm", "composio"],
   "bin": {
     "hillclimb": "dist/cli.js"
   },

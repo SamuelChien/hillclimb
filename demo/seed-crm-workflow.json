@@ -1,0 +1,38 @@
+{
+  "spreadsheets": [
+    {"id": "crm_leads", "title": "CRM Lead Tracker"}
+  ],
+  "sheets": [
+    {
+      "spreadsheet_id": "crm_leads",
+      "rows": [
+        ["Name", "Email", "Company", "Status", "Last Contact"],
+        ["Alice Chen", "alice@acme.com", "Acme Corp", "Qualified", "2026-05-28"],
+        ["Bob Park", "bob@widget.io", "Widget Inc", "Discovery", "2026-06-01"],
+        ["Carol Davis", "carol@startup.co", "Startup Co", "Proposal Sent", "2026-05-30"]
+      ]
+    }
+  ],
+  "drive_files": [
+    {
+      "id": "proposal_acme",
+      "name": "Acme Corp Proposal v2.pdf",
+      "mime_type": "application/pdf",
+      "content": "Enterprise Plan: $50K/year. 10 seats. Priority support. Custom integrations."
+    },
+    {
+      "id": "meeting_notes_widget",
+      "name": "Widget Inc Discovery Notes.txt",
+      "mime_type": "text/plain",
+      "content": "Met with Bob Park (CTO). Pain: manual data entry across 3 systems. Budget: $30K. Timeline: Q3. Next step: send proposal."
+    }
+  ],
+  "calendar_events": [
+    {
+      "id": "follow_up_alice",
+      "summary": "Follow-up: Alice Chen (Acme)",
+      "start_time": "2026-06-05T14:00:00Z",
+      "end_time": "2026-06-05T14:30:00Z"
+    }
+  ]
+}
