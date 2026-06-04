@@ -51,7 +51,49 @@ bash demo/agent-eval-demo.sh
 
 Demo 1 shows the mock connector in action: seed CRM leads, search Drive, read files, send email, create calendar event, update spreadsheet, verify everything via the audit log.
 
-Demo 2 shows the eval loop: run 4 scenarios (email, calendar, sheets, multi-tool), check assertions, get pass/fail results. This is how you test prompt changes before deploying.
+Demo 2 shows the eval loop: run 4 scenarios (email, calendar, sheets, multi-tool), check assertions, get pass/fail results.
+
+### The CI Loop (what you actually want)
+
+```bash
+# 1. Save baseline BEFORE your prompt change
+bash demo/compare.sh baseline
+
+# 2. Make your prompt change (edit system prompt, tool description, skill, etc.)
+
+# 3. Run revision AFTER your change
+bash demo/compare.sh revision
+```
+
+Output:
+
+```
+Hill Climb Comparison Report
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Overall
+  ┌──────────────┬──────────┬──────────┬────────┐
+  │ Metric       │ Baseline │ Revision │ Delta  │
+  ├──────────────┼──────────┼──────────┼────────┤
+  │ Pass rate    │   75.0%  │  100.0%  │ +25.0% │
+  │ Passed       │    3/4   │    4/4   │    +1  │
+  └──────────────┴──────────┴──────────┴────────┘
+
+  Per Scenario
+  ┌──────────────────┬──────────┬──────────┬───────────┐
+  │ Scenario         │ Baseline │ Revision │ Status    │
+  ├──────────────────┼──────────┼──────────┼───────────┤
+  │ email_send       │ PASS     │ PASS     │ STABLE    │
+  │ calendar_create  │ FAIL     │ PASS     │ FIXED     │
+  │ sheet_create     │ PASS     │ PASS     │ STABLE    │
+  │ multi_tool       │ PASS     │ PASS     │ STABLE    │
+  └──────────────────┴──────────┴──────────┴───────────┘
+
+  VERDICT: SAFE TO DEPLOY
+  Pass rate improved (75.0% -> 100.0%), no regressions.
+```
+
+Exits non-zero on regressions. Drop it in your CI pipeline.
 
 ## What's Inside
 
