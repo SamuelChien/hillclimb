@@ -192,24 +192,51 @@ function detectFailures(sessions: SessionSummary[]): FailureCluster[] {
       upsertCluster(clusters, "EDIT_WITHOUT_READ", "Edit/Write without prior Read", 2, s);
     }
 
-    // Tool errors
+    // Tool errors - classify into known categories, collapse the long tail
     for (const err of s.errorMessages) {
-      const normalized = normalizeError(err);
+      const lower = err.toLowerCase();
 
       if (err.includes("File has not been read")) {
         upsertCluster(clusters, "FILE_NOT_READ", "File has not been read yet", 2, s, err);
-      } else if (err.includes("ENOENT") || err.includes("does not exist")) {
+      } else if (lower.includes("enoent") || err.includes("does not exist") || err.includes("File does not exist") || err.includes("No such file")) {
         upsertCluster(clusters, "FILE_NOT_FOUND", "File or path not found", 2, s, err);
-      } else if (err.includes("JSON") || err.includes("parse") || err.includes("SyntaxError")) {
+      } else if (lower.includes("json") || lower.includes("parse error") || lower.includes("syntaxerror") || lower.includes("unexpected token")) {
         upsertCluster(clusters, "JSON_MALFORMED", "JSON parse or format error", 3, s, err);
-      } else if (err.includes("timeout") || err.includes("ETIMEDOUT")) {
+      } else if (lower.includes("timeout") || lower.includes("etimedout") || lower.includes("timed out")) {
         upsertCluster(clusters, "TIMEOUT", "Command or request timeout", 2, s, err);
-      } else if (err.includes("permission") || err.includes("EACCES")) {
+      } else if (lower.includes("permission") || lower.includes("eacces") || lower.includes("not permitted")) {
         upsertCluster(clusters, "PERMISSION_DENIED", "Permission denied", 2, s, err);
-      } else if (err.includes("Exit code")) {
-        upsertCluster(clusters, "NONZERO_EXIT", "Command exited with non-zero status", 1, s, err);
+      } else if (lower.includes("cancelled") || lower.includes("canceled")) {
+        upsertCluster(clusters, "CANCELLED", "Tool call cancelled (parallel or user)", 1, s, err);
+      } else if (lower.includes("multiple operations") || lower.includes("requires approval")) {
+        upsertCluster(clusters, "MULTI_OP_BLOCKED", "Multi-operation Bash blocked by safety check", 1, s, err);
+      } else if (lower.includes("not found") || lower.includes("404")) {
+        upsertCluster(clusters, "RESOURCE_NOT_FOUND", "Resource not found (API/service 404)", 1, s, err);
+      } else if (lower.includes("connection refused") || lower.includes("econnrefused") || lower.includes("econnreset")) {
+        upsertCluster(clusters, "CONNECTION_ERROR", "Connection refused or reset", 2, s, err);
+      } else if (lower.includes("git") && (lower.includes("rejected") || lower.includes("conflict") || lower.includes("non-fast-forward"))) {
+        upsertCluster(clusters, "GIT_CONFLICT", "Git push/merge conflict or rejection", 2, s, err);
+      } else if (lower.includes("type error") || lower.includes("typeerror") || lower.includes("is not a function")) {
+        upsertCluster(clusters, "TYPE_ERROR", "JavaScript/TypeScript type error", 2, s, err);
+      } else if (lower.includes("import") && lower.includes("error")) {
+        upsertCluster(clusters, "IMPORT_ERROR", "Module import error", 2, s, err);
+      } else if (err.startsWith("Exit code")) {
+        // Sub-classify non-zero exit codes by what follows
+        const afterCode = err.slice(12).trim().toLowerCase();
+        if (afterCode.includes("traceback") || afterCode.includes("error:")) {
+          upsertCluster(clusters, "SCRIPT_ERROR", "Script/command failed with error output", 2, s, err);
+        } else if (afterCode.includes("npm") || afterCode.includes("pnpm")) {
+          upsertCluster(clusters, "PACKAGE_ERROR", "Package manager (npm/pnpm) error", 1, s, err);
+        } else if (afterCode.includes("tsc") || afterCode.includes("typescript")) {
+          upsertCluster(clusters, "TYPECHECK_ERROR", "TypeScript compilation error", 2, s, err);
+        } else if (afterCode.includes("test") || afterCode.includes("vitest") || afterCode.includes("jest")) {
+          upsertCluster(clusters, "TEST_FAILURE", "Test suite failure", 2, s, err);
+        } else {
+          upsertCluster(clusters, "NONZERO_EXIT", "Command exited with non-zero status", 1, s, err);
+        }
       } else {
-        upsertCluster(clusters, `ERROR_${normalized}`, `Error: ${err.slice(0, 60)}`, 1, s, err);
+        // Collapse remaining errors into a generic "other" bucket
+        upsertCluster(clusters, "OTHER_ERROR", "Other tool/command errors", 1, s, err);
       }
     }
 

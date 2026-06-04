@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hill Climb Results — Real Eval Data</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --bg: #0a0a0a; --surface: #141414; --border: #262626; --text: #fafafa; --muted: #a1a1aa; --green: #22c55e; --red: #ef4444; --yellow: #eab308; --blue: #3b82f6; --mono: 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+        a { color: var(--blue); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .header { padding: 40px 0 20px; border-bottom: 1px solid var(--border); }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { color: var(--muted); }
+        .back { display: inline-block; margin-bottom: 16px; color: var(--muted); font-size: 0.9rem; }
+
+        section { padding: 40px 0; border-bottom: 1px solid var(--border); }
+        h2 { font-size: 1.5rem; margin-bottom: 16px; }
+        h3 { font-size: 1.1rem; margin: 24px 0 12px; color: var(--muted); }
+
+        .metric-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.85rem; margin: 16px 0; }
+        .metric-table th, .metric-table td { padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .metric-table th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .metric-table .num { text-align: right; }
+        .up { color: var(--green); }
+        .down { color: var(--red); }
+        .neutral { color: var(--muted); }
+        .highlight { background: #22c55e10; }
+
+        .bar-container { display: flex; align-items: center; gap: 8px; }
+        .bar { height: 8px; border-radius: 4px; transition: width 0.3s; }
+        .bar.baseline { background: var(--muted); }
+        .bar.best { background: var(--green); }
+
+        .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+        @media (max-width: 640px) { .stat-row { grid-template-columns: repeat(2, 1fr); } }
+        .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; }
+        .stat .value { font-size: 2rem; font-weight: 700; }
+        .stat .label { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+        .cluster-list { list-style: none; }
+        .cluster-list li { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+        .cluster-priority { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); min-width: 40px; text-align: right; }
+        .cluster-bar { height: 6px; border-radius: 3px; background: var(--red); }
+        .cluster-title { font-size: 0.9rem; }
+        .cluster-count { color: var(--muted); font-size: 0.8rem; }
+
+        .proof { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; font-size: 0.85rem; }
+        .proof .label { color: var(--green); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <a href="index.html" class="back">Back to Hill Climb</a>
+        <h1>Real Eval Results</h1>
+        <p>Production data from 291 Claude Code sessions and 3 Langfuse hill-climb experiments.</p>
+    </div>
+
+    <section>
+        <h2>Langfuse Hill Climb: DeepSeek v4 Flash</h2>
+        <p style="color: var(--muted); margin-bottom: 16px;">37 real user conversations. Judge: Gemini 2.5 Flash. Mutation model: Claude Sonnet 4.6. 3 rounds, 3 variants each.</p>
+
+        <table class="metric-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th class="num">Baseline</th>
+                    <th class="num">Best</th>
+                    <th class="num">Delta</th>
+                    <th style="width: 200px;">Progress</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="highlight">
+                    <td>language_match</td>
+                    <td class="num">0.818</td>
+                    <td class="num up">0.926</td>
+                    <td class="num up">+0.108</td>
+                    <td><div class="bar-container"><div class="bar baseline" style="width: 82%"></div><div class="bar best" style="width: 93%"></div></div></td>
+                </tr>
+                <tr class="highlight">
+                    <td>task_completion</td>
+                    <td class="num">0.730</td>
+                    <td class="num up">0.838</td>
+                    <td class="num up">+0.109</td>
+                    <td><div class="bar-container"><div class="bar baseline" style="width: 73%"></div><div class="bar best" style="width: 84%"></div></div></td>
+                </tr>
+                <tr class="highlight">
+                    <td>tool_selection</td>
+                    <td class="num">0.459</td>
+                    <td class="num up">0.534</td>
+                    <td class="num up">+0.074</td>
+                    <td><div class="bar-container"><div class="bar baseline" style="width: 46%"></div><div class="bar best" style="width: 53%"></div></div></td>
+                </tr>
+                <tr>
+                    <td>response_style</td>
+                    <td class="num">0.792</td>
+                    <td class="num neutral">0.793</td>
+                    <td class="num neutral">+0.001</td>
+                    <td><div class="bar-container"><div class="bar baseline" style="width: 79%"></div><div class="bar best" style="width: 79%"></div></div></td>
+                </tr>
+                <tr>
+                    <td>plain_text</td>
+                    <td class="num">0.978</td>
+                    <td class="num neutral">0.978</td>
+                    <td class="num neutral">0.000</td>
+                    <td><div class="bar-container"><div class="bar baseline" style="width: 98%"></div><div class="bar best" style="width: 98%"></div></div></td>
+                </tr>
+                <tr>
+                    <td>metadata_leakage</td>
+                    <td class="num">1.000</td>
+                    <td class="num neutral">1.000</td>
+                    <td class="num neutral">0.000</td>
+                    <td><div class="bar-container"><div class="bar baseline" style="width: 100%"></div><div class="bar best" style="width: 100%"></div></div></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr style="font-weight: 700;">
+                    <td>AVERAGE</td>
+                    <td class="num">0.796</td>
+                    <td class="num up">0.836</td>
+                    <td class="num up">+0.039</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="proof">
+            <div class="label">What the hill climb did</div>
+            <p>Round 1 generated a "language-match-and-style" variant that added explicit language detection rules to the system prompt. This fixed 10.8% of language_match failures (bot responding in wrong language in multilingual group chats) and improved task_completion by 10.9% (bot now actually executes tool calls instead of describing what it would do).</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>Session Scan: 291 Real Sessions</h2>
+        <p style="color: var(--muted); margin-bottom: 16px;">7 days of Claude Code sessions from a production engineering workflow.</p>
+
+        <div class="stat-row">
+            <div class="stat">
+                <div class="value">291</div>
+                <div class="label">Sessions scanned</div>
+            </div>
+            <div class="stat">
+                <div class="value">16,104</div>
+                <div class="label">Tool calls analyzed</div>
+            </div>
+            <div class="stat">
+                <div class="value">769</div>
+                <div class="label">Errors detected</div>
+            </div>
+            <div class="stat">
+                <div class="value">657</div>
+                <div class="label">Secrets redacted</div>
+            </div>
+        </div>
+
+        <h3>Top Failure Clusters</h3>
+        <ul class="cluster-list">
+            <li>
+                <span class="cluster-priority">431</span>
+                <div style="flex: 1;">
+                    <div class="cluster-title">Non-zero exit codes</div>
+                    <div class="cluster-count">431 occurrences across 65 sessions</div>
+                </div>
+            </li>
+            <li>
+                <span class="cluster-priority">267</span>
+                <div style="flex: 1;">
+                    <div class="cluster-title">Bash doom loops (4+ consecutive)</div>
+                    <div class="cluster-count">89 occurrences across 89 sessions</div>
+                </div>
+            </li>
+            <li>
+                <span class="cluster-priority">160</span>
+                <div style="flex: 1;">
+                    <div class="cluster-title">Edit/Write without prior Read</div>
+                    <div class="cluster-count">80 occurrences across 80 sessions</div>
+                </div>
+            </li>
+            <li>
+                <span class="cluster-priority">144</span>
+                <div style="flex: 1;">
+                    <div class="cluster-title">Struggling sessions (&gt;50 calls, &gt;5 errors)</div>
+                    <div class="cluster-count">36 occurrences across 36 sessions</div>
+                </div>
+            </li>
+            <li>
+                <span class="cluster-priority">142</span>
+                <div style="flex: 1;">
+                    <div class="cluster-title">"File has not been read yet" errors</div>
+                    <div class="cluster-count">71 occurrences across 42 sessions</div>
+                </div>
+            </li>
+            <li>
+                <span class="cluster-priority">72</span>
+                <div style="flex: 1;">
+                    <div class="cluster-title">Permission denied</div>
+                    <div class="cluster-count">36 occurrences across 17 sessions</div>
+                </div>
+            </li>
+            <li>
+                <span class="cluster-priority">64</span>
+                <div style="flex: 1;">
+                    <div class="cluster-title">File or path not found</div>
+                    <div class="cluster-count">32 occurrences across 26 sessions</div>
+                </div>
+            </li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Mock Connector Eval: 4/4 Live Claude</h2>
+        <p style="color: var(--muted); margin-bottom: 16px;">Real Claude agent (claude -p) making real HTTP tool calls against mock enterprise connectors.</p>
+
+        <table class="metric-table">
+            <thead>
+                <tr><th>Scenario</th><th>Connectors</th><th class="num">Status</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Send email</td><td>Gmail</td><td class="num up">PASS</td></tr>
+                <tr><td>Create calendar event</td><td>Google Calendar</td><td class="num up">PASS</td></tr>
+                <tr><td>Create sheet + append rows</td><td>Google Sheets (multi-step)</td><td class="num up">PASS</td></tr>
+                <tr><td>Search Drive + read file</td><td>Google Drive + Sheets (multi-tool)</td><td class="num up">PASS</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section style="border: none; text-align: center; padding: 60px 0;">
+        <h2>These are real numbers from a production agent.</h2>
+        <p style="color: var(--muted); margin: 16px auto; max-width: 500px;">Not synthetic benchmarks. Not cherry-picked scenarios. 291 real sessions, 37 real conversations, running against a real LINE/Telegram agent serving real users.</p>
+        <div style="margin-top: 24px;">
+            <a href="https://github.com/SamuelChien/hillclimb" style="display: inline-block; padding: 12px 24px; background: var(--green); color: #000; border-radius: 8px; font-weight: 600;">Get Started</a>
+            <a href="mailto:samuelchien821@gmail.com?subject=Hill Climb for our team" style="display: inline-block; padding: 12px 24px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-weight: 600; margin-left: 12px;">Talk to Us</a>
+        </div>
+    </section>
+</div>
+</body>
+</html>
