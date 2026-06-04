@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hill Climb for Teams — Agent Reliability for Enterprise Connectors</title>
+    <meta name="description" content="Your agent connects to Gmail, Drive, Calendar, Outlook. How do you know your prompt change didn't break something? Hill Climb tells you.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --bg: #0a0a0a; --surface: #141414; --border: #262626; --text: #fafafa; --muted: #a1a1aa; --green: #22c55e; --red: #ef4444; --blue: #3b82f6; --mono: 'SF Mono', 'Cascadia Code', Consolas, monospace; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+        .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+        a { color: var(--blue); }
+
+        .hero { padding: 80px 0 40px; text-align: center; }
+        .hero h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 16px; }
+        .hero h1 span { color: var(--green); }
+        .hero .sub { color: var(--muted); font-size: 1.1rem; max-width: 560px; margin: 0 auto; }
+
+        section { padding: 48px 0; border-top: 1px solid var(--border); }
+        h2 { font-size: 1.4rem; margin-bottom: 16px; }
+        p { margin-bottom: 16px; }
+        .muted { color: var(--muted); }
+
+        .scenario { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin: 20px 0; }
+        .scenario .label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--red); margin-bottom: 8px; }
+        .scenario .label.after { color: var(--green); }
+
+        .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+        @media (max-width: 640px) { .metric-row { grid-template-columns: 1fr; } }
+        .metric { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; }
+        .metric .val { font-size: 2rem; font-weight: 700; color: var(--green); }
+        .metric .desc { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+        .step-list { list-style: none; counter-reset: steps; }
+        .step-list li { counter-increment: steps; padding: 16px 0; border-bottom: 1px solid var(--border); display: flex; gap: 16px; align-items: flex-start; }
+        .step-list li::before { content: counter(steps); background: var(--green); color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+
+        .cta-section { text-align: center; padding: 60px 0; }
+        .btn { display: inline-block; padding: 14px 28px; border-radius: 8px; font-size: 1rem; font-weight: 600; text-decoration: none; }
+        .btn-green { background: var(--green); color: #000; }
+        .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); margin-left: 12px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 16px 0; }
+        th, td { padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+        .green { color: var(--green); }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="hero">
+        <h1>Your agent connects to <span>10 enterprise APIs</span>.<br>How do you test prompt changes?</h1>
+        <p class="sub">Hill Climb gives your team mock connectors, eval scenarios, and a baseline-vs-revision comparison loop. Know your change is safe before you deploy.</p>
+    </div>
+
+    <section>
+        <h2>The problem</h2>
+        <div class="scenario">
+            <div class="label">Monday morning</div>
+            <p>Your agent sends emails via Gmail, creates calendar events, reads Google Drive files, and updates Sheets. A customer reports the agent sent a duplicate email. You fix the system prompt. Push to staging. The email is fixed. But now the calendar connector hallucinates event times. You find out Thursday from another customer.</p>
+        </div>
+        <div class="scenario">
+            <div class="label after">With Hill Climb</div>
+            <p>Before pushing, you run <code>hillclimb compare baseline</code>. After your fix, <code>hillclimb compare revision</code>. The report shows: email FIXED, calendar STABLE, sheets STABLE, drive STABLE, 0 regressions. You deploy Monday morning with confidence.</p>
+        </div>
+    </section>
+
+    <section>
+        <h2>What we measured on a production agent</h2>
+        <p class="muted">37 real user conversations. DeepSeek v4 Flash. 3 rounds of automated prompt optimization.</p>
+
+        <div class="metric-row">
+            <div class="metric">
+                <div class="val">+10.9%</div>
+                <div class="desc">task_completion<br>(73.0% to 83.8%)</div>
+            </div>
+            <div class="metric">
+                <div class="val">+10.8%</div>
+                <div class="desc">language_match<br>(81.8% to 92.6%)</div>
+            </div>
+            <div class="metric">
+                <div class="val">+7.4%</div>
+                <div class="desc">tool_selection<br>(45.9% to 53.4%)</div>
+            </div>
+        </div>
+
+        <p class="muted">These aren't synthetic benchmarks. This is a LINE/Telegram agent serving real users, evaluated on real conversation data via Langfuse. <a href="results.html">Full results with per-round breakdown.</a></p>
+    </section>
+
+    <section>
+        <h2>What you get</h2>
+        <table>
+            <tr><th style="width: 200px;">Component</th><th>Details</th></tr>
+            <tr><td>Mock connectors</td><td>Gmail, Drive, Calendar, Sheets, Outlook, Slack, HubSpot, GitHub, Gong, MS Teams. Stateful SQLite backing. Composio v3 API compatible.</td></tr>
+            <tr><td>Eval task library</td><td>11 YAML scenarios: email, calendar, sheets, multi-step orchestration, CRM, negative cases, regression tests. Add your own.</td></tr>
+            <tr><td>Comparison loop</td><td>Baseline before your change, revision after. Per-scenario STABLE/FIXED/REGRESSED. Exit non-zero on regressions. Drop in CI.</td></tr>
+            <tr><td>Session scanner</td><td>Ingest Claude Code sessions (or Axiom/BigQuery/Langfuse). Auto-detect failure patterns. 21 cluster categories, secret redaction.</td></tr>
+            <tr><td>Live agent eval</td><td>Real Claude agent via <code>claude -p</code> making real tool calls against mocks. 4/4 scenarios passing.</td></tr>
+        </table>
+    </section>
+
+    <section>
+        <h2>How your team would use it</h2>
+        <ol class="step-list">
+            <li><div><strong>Install</strong> (30 seconds)<br><code>git clone https://github.com/SamuelChien/hillclimb && pip install fastapi uvicorn</code></div></li>
+            <li><div><strong>Start mocks</strong><br><code>python mock-services/app.py &</code><br>Point your agent's COMPOSIO_BASE_URL at localhost:8081.</div></li>
+            <li><div><strong>Run baseline</strong> before your prompt change<br><code>bash demo/compare.sh baseline</code></div></li>
+            <li><div><strong>Make your change</strong> to the system prompt, tool descriptions, or skills</div></li>
+            <li><div><strong>Run revision</strong> after your change<br><code>bash demo/compare.sh revision</code><br>Get the verdict: SAFE TO DEPLOY or REGRESSED.</div></li>
+            <li><div><strong>Scan sessions</strong> weekly to find new failure patterns<br><code>hillclimb run --since 7d</code></div></li>
+        </ol>
+    </section>
+
+    <section>
+        <h2>Pricing</h2>
+        <p>Hill Climb is <strong>open source</strong> (MIT license). Run it yourself, forever, for free.</p>
+        <p>For teams that want hosted eval infrastructure, managed mock environments, and priority support:</p>
+        <table>
+            <tr><th>Plan</th><th>What you get</th><th>Price</th></tr>
+            <tr><td>Open Source</td><td>Everything in the repo. Self-hosted.</td><td class="green">Free</td></tr>
+            <tr><td>Team</td><td>Hosted eval runner. Shared mock environments. Langfuse integration. Slack alerts on regressions.</td><td>$500/mo</td></tr>
+            <tr><td>Enterprise</td><td>Custom connectors. SLA. SSO. Dedicated support. On-prem option.</td><td>Contact us</td></tr>
+        </table>
+    </section>
+
+    <div class="cta-section">
+        <h2>Try it in 2 minutes. Talk to us when you're ready for hosted.</h2>
+        <p class="muted" style="margin-bottom: 24px;">No signup. No credit card. Clone and run.</p>
+        <a href="https://github.com/SamuelChien/hillclimb" class="btn btn-green">Get started</a>
+        <a href="mailto:samuelchien821@gmail.com?subject=Hill%20Climb%20for%20our%20team&body=Hi%20Samuel%2C%0A%0AWe're%20building%20agents%20with%20enterprise%20connectors%20and%20interested%20in%20Hill%20Climb.%0A%0AOur%20setup%3A%0A-%20Connectors%20we%20use%3A%20%0A-%20Agent%20framework%3A%20%0A-%20Team%20size%3A%20%0A%0AWould%20love%20to%20chat." class="btn btn-outline">Book a call</a>
+    </div>
+
+</div>
+</body>
+</html>
