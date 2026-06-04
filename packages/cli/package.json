@@ -1,0 +1,29 @@
+{
+  "name": "hillclimb",
+  "version": "0.1.0",
+  "description": "CLI for Hill Climb eval harness — seed, test, and inspect mock connector state",
+  "license": "MIT",
+  "bin": {
+    "hillclimb": "dist/cli.js"
+  },
+  "main": "dist/cli.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "yaml": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
