@@ -1,5 +1,5 @@
 {
-  "name": "hillclimb",
+  "name": "hillclimb-ai",
   "version": "0.1.0",
   "description": "CLI for Hill Climb eval harness — seed, test, and inspect mock connector state",
   "license": "MIT",
@@ -10,7 +10,8 @@
   },
   "keywords": ["agent", "eval", "mock", "connector", "ci", "testing", "llm", "composio", "agentwatch"],
   "bin": {
-    "hillclimb": "dist/cli.js"
+    "hillclimb": "dist/cli.js",
+    "hillclimb-ai": "dist/cli.js"
   },
   "main": "dist/cli.js",
   "files": [
